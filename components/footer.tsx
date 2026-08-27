@@ -12,7 +12,7 @@ export default function Footer() {
               href="/"
               className="group flex items-center gap-2.5 text-lg font-bold tracking-tight text-slate-900 transition-opacity hover:opacity-90"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-tr from-violet-600 via-violet-500 to-fuchsia-500 text-white shadow-glow-indigo group-hover:scale-105 transition-transform duration-200">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-tr from-violet-600 via-violet-500 to-fuchsia-500 text-white shadow-glow-indigo group-hover:scale-105 transition-transform duration-200">
                 <Briefcase className="h-4 w-4" />
               </div>
               <span className="bg-linear-to-r from-slate-900 to-violet-800 bg-clip-text text-transparent">
@@ -92,7 +92,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-200/70 pt-6 sm:flex-row">
           <p className="flex items-center gap-1.5 text-xs text-slate-400">
-            © {new Date().getFullYear()} Job Tracker. All rights reserved.
+            © 2026 Job Tracker. All rights reserved.
           </p>
           <p className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
             Built with <Heart className="h-3.5 w-3.5 fill-rose-500 text-rose-500 animate-pulse" /> by{" "}

@@ -42,7 +42,7 @@ export default function SignIn() {
       } else {
         router.push("/dashboard");
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred");
     } finally {
       setLoading(false);
@@ -60,7 +60,7 @@ export default function SignIn() {
 
       <Card className="w-full max-w-md border border-slate-200/80 bg-white/90 shadow-panel backdrop-blur-sm rounded-2xl p-2">
         <CardHeader className="space-y-2 text-center pb-4">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-violet-600 to-fuchsia-500 text-white shadow-glow-indigo mb-2">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-tr from-violet-600 to-fuchsia-500 text-white shadow-glow-indigo mb-2">
             <Briefcase className="h-6 w-6" />
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight text-slate-900">
@@ -133,7 +133,7 @@ export default function SignIn() {
             </Button>
 
             <p className="text-center text-xs text-slate-500">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link
                 href="/sign-up"
                 className="font-semibold text-violet-600 hover:text-violet-700 hover:underline"

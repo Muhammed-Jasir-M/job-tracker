@@ -2,6 +2,7 @@ import { getSession } from "@/lib/auth/auth";
 import connectDB from "@/lib/db";
 import { Board } from "@/lib/models";
 import { redirect } from "next/navigation";
+import { demoBoard } from "@/lib/demo-data";
 import ApplicationsManager from "@/components/applications-manager";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -30,7 +31,13 @@ async function ApplicationsPage() {
   const session = await getSession();
 
   if (!session?.user) {
-    redirect("/sign-in");
+    return (
+      <div className="min-h-screen bg-background pb-16">
+        <div className="container mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+          <ApplicationsManager board={demoBoard} />
+        </div>
+      </div>
+    );
   }
 
   const board = await getBoardData(session.user.id);

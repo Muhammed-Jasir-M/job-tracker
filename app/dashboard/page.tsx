@@ -1,7 +1,6 @@
 import { getSession } from "@/lib/auth/auth";
 import connectDB from "@/lib/db";
 import { Board } from "@/lib/models";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import KanbanBoard from "@/components/kanban-board";
 import { Button } from "@/components/ui/button";
@@ -31,14 +30,18 @@ async function getBoard(userId: string) {
   return board;
 }
 
+import { demoBoard } from "@/lib/demo-data";
+
 async function DashboardPage() {
   const session = await getSession();
+  const isGuest = !session?.user;
 
-  if (!session?.user) {
-    redirect("/sign-in");
+  let board = null;
+  if (!isGuest && session?.user?.id) {
+    board = await getBoard(session.user.id);
+  } else {
+    board = demoBoard;
   }
-
-  const board = await getBoard(session.user.id);
 
   return (
     <div className="min-h-screen bg-background pb-16">
@@ -68,7 +71,7 @@ async function DashboardPage() {
             </Button>
           </Link>
         </div>
-        <KanbanBoard board={board} userId={session.user.id} />
+        <KanbanBoard board={board} userId={session?.user?.id} />
       </div>
     </div>
   );

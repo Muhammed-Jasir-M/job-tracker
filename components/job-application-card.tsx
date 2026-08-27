@@ -5,25 +5,22 @@ import { Card, CardContent } from "./ui/card";
 import {
   Building2,
   DollarSign,
-  Edit2,
   ExternalLink,
   GripVertical,
   MapPin,
-  MoreVertical,
-  MoveRight,
   Trash2,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
 import { Button } from "./ui/button";
 import {
   deleteJobApplication,
   updateJobApplication,
 } from "@/lib/actions/job-applications";
+import {
+  isGuestBoard,
+  deleteGuestJob,
+  moveGuestJob,
+  updateGuestJob,
+} from "@/lib/guest-storage";
 import {
   Dialog,
   DialogContent,
@@ -41,6 +38,7 @@ interface JobApplicationCardProps {
   job: JobApplication;
   columns: Column[];
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
+  boardId?: string;
 }
 
 // Generate pastel avatar background color based on company name
@@ -77,7 +75,9 @@ export default function JobApplicationCard({
   job,
   columns,
   dragHandleProps,
+  boardId,
 }: JobApplicationCardProps) {
+  const isGuest = isGuestBoard(boardId);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     company: job.company,
@@ -94,6 +94,28 @@ export default function JobApplicationCard({
 
   async function handleUpdate(e: React.FormEvent) {
     e.preventDefault();
+
+    if (isGuest) {
+      updateGuestJob(job._id, {
+        company: formData.company,
+        position: formData.position,
+        location: formData.location,
+        priority: formData.priority,
+        notes: formData.notes,
+        salary: formData.salary,
+        jobUrl: formData.jobUrl,
+        columnId: formData.columnId,
+        tags: formData.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag.length > 0),
+        description: formData.description,
+      });
+      setIsEditing(false);
+      window.location.reload();
+      return;
+    }
+
     try {
       const result = await updateJobApplication(job._id, {
         ...formData,
@@ -112,6 +134,11 @@ export default function JobApplicationCard({
   }
 
   async function handleDelete() {
+    if (isGuest) {
+      deleteGuestJob(job._id);
+      window.location.reload();
+      return;
+    }
     try {
       const result = await deleteJobApplication(job._id);
       if (result.error) {
@@ -123,6 +150,11 @@ export default function JobApplicationCard({
   }
 
   async function handleMove(newColumnId: string) {
+    if (isGuest) {
+      moveGuestJob(job._id, newColumnId, 999);
+      window.location.reload();
+      return;
+    }
     try {
       await updateJobApplication(job._id, {
         columnId: newColumnId,
@@ -415,18 +447,32 @@ export default function JobApplicationCard({
               </div>
             </div>
 
-            <DialogFooter className="gap-2 pt-2">
+            <DialogFooter className="gap-2 pt-2 justify-between flex-row">
               <Button
                 type="button"
-                variant="outline"
-                onClick={() => setIsEditing(false)}
-                className="rounded-xl border-slate-200"
+                variant="destructive"
+                onClick={() => {
+                  handleDelete();
+                  setIsEditing(false);
+                }}
+                className="rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 border border-rose-200 shadow-none gap-1.5"
               >
-                Cancel
+                <Trash2 className="h-4 w-4" />
+                Delete Application
               </Button>
-              <Button type="submit" className="bg-violet-600 hover:bg-violet-700 text-white shadow-glow-indigo rounded-xl">
-                Save Changes
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditing(false)}
+                  className="rounded-xl border-slate-200"
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" className="bg-violet-600 hover:bg-violet-700 text-white shadow-glow-indigo rounded-xl">
+                  Save Changes
+                </Button>
+              </div>
             </DialogFooter>
           </form>
         </DialogContent>

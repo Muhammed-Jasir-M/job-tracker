@@ -91,22 +91,23 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/sign-in">
+              <Link href="/dashboard">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="font-semibold text-xs sm:text-sm text-slate-700 hover:bg-slate-100 rounded-xl gap-1.5 h-9 px-2.5 sm:px-3"
+                  className="font-semibold text-xs sm:text-sm text-slate-700 hover:bg-violet-50 hover:text-violet-700 rounded-xl gap-1.5 h-9 px-2.5 sm:px-3"
                 >
-                  <LogIn className="h-4 w-4 shrink-0 text-slate-500" />
-                  <span>Log In</span>
+                  <LayoutDashboard className="h-4 w-4 text-violet-600 shrink-0" />
+                  <span>Dashboard</span>
                 </Button>
               </Link>
-              <Link href="/sign-up">
+              <Link href="/sign-in">
                 <Button
                   size="sm"
-                  className="bg-violet-600 hover:bg-violet-700 text-white font-semibold shadow-glow-indigo rounded-xl text-xs sm:text-sm h-9 px-3 transition-all"
+                  className="bg-violet-600 hover:bg-violet-700 text-white font-semibold shadow-glow-indigo rounded-xl text-xs sm:text-sm h-9 px-3.5 transition-all gap-1.5"
                 >
-                  Start for free
+                  <LogIn className="h-4 w-4 shrink-0" />
+                  <span>Sign in</span>
                 </Button>
               </Link>
             </>

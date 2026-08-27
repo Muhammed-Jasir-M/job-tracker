@@ -12,6 +12,7 @@ export async function createColumn(data: { boardId: string; name: string }) {
   if (!session?.user) {
     return { error: "Unauthorized" };
   }
+  const userId = session.user.id;
 
   await connectDB();
 
@@ -22,7 +23,7 @@ export async function createColumn(data: { boardId: string; name: string }) {
   }
 
   // Verify board ownership
-  const board = await Board.findOne({ _id: boardId, userId: session.user.id });
+  const board = await Board.findOne({ _id: boardId, userId });
 
   if (!board) {
     return { error: "Board not found" };
@@ -54,6 +55,7 @@ export async function renameColumn(id: string, name: string) {
   if (!session?.user) {
     return { error: "Unauthorized" };
   }
+  const userId = session.user.id;
 
   await connectDB();
 
@@ -70,7 +72,7 @@ export async function renameColumn(id: string, name: string) {
   // Verify the column belongs to a board owned by this user
   const board = await Board.findOne({
     _id: column.boardId,
-    userId: session.user.id,
+    userId,
   });
 
   if (!board) {
@@ -91,6 +93,7 @@ export async function deleteColumn(id: string) {
   if (!session?.user) {
     return { error: "Unauthorized" };
   }
+  const userId = session.user.id;
 
   await connectDB();
 
@@ -103,7 +106,7 @@ export async function deleteColumn(id: string) {
   // Verify the column belongs to a board owned by this user
   const board = await Board.findOne({
     _id: column.boardId,
-    userId: session.user.id,
+    userId,
   });
 
   if (!board) {
@@ -132,6 +135,7 @@ export async function updateColumnOrder(columnId: string, newOrder: number) {
   if (!session?.user) {
     return { error: "Unauthorized" };
   }
+  const userId = session.user.id;
 
   await connectDB();
 
@@ -140,7 +144,7 @@ export async function updateColumnOrder(columnId: string, newOrder: number) {
 
   const board = await Board.findOne({
     _id: column.boardId,
-    userId: session.user.id,
+    userId,
   });
 
   if (!board) return { error: "Unauthorized" };

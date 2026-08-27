@@ -1,20 +1,49 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Board, Column, JobApplication } from "../models/models.types";
+import { getGuestBoardFromStorage, saveGuestBoardToStorage } from "../guest-storage";
 import { updateJobApplication } from "../actions/job-applications";
 
 export function useBoard(initialBoard?: Board | null) {
-  const [board, setBoard] = useState<Board | null>(initialBoard || null);
-  const [columns, setColumns] = useState<Column[]>(initialBoard?.columns || []);
-  const [error, setError] = useState<string | null>(null);
+  const [boardState, setBoardState] = useState<{
+    prevInitialBoard: Board | null | undefined;
+    board: Board | null;
+    columns: Column[];
+  }>(() => {
+    const b =
+      initialBoard?._id === "demo-board" && typeof window !== "undefined"
+        ? getGuestBoardFromStorage()
+        : initialBoard || null;
+    return {
+      prevInitialBoard: initialBoard,
+      board: b,
+      columns: b?.columns || [],
+    };
+  });
 
-  useEffect(() => {
-    if (initialBoard) {
-      setBoard(initialBoard);
-      setColumns(initialBoard.columns || []);
-    }
-  }, [initialBoard]);
+  if (initialBoard !== boardState.prevInitialBoard) {
+    const b =
+      initialBoard?._id === "demo-board" && typeof window !== "undefined"
+        ? getGuestBoardFromStorage()
+        : initialBoard || null;
+    setBoardState({
+      prevInitialBoard: initialBoard,
+      board: b,
+      columns: b?.columns || [],
+    });
+  }
+
+  const { board, columns } = boardState;
+
+  function setColumns(
+    updater: (prev: Column[]) => Column[]
+  ) {
+    setBoardState((prev) => ({
+      ...prev,
+      columns: updater(prev.columns),
+    }));
+  }
 
   async function moveJob(
     jobApplicationId: string,
@@ -26,8 +55,6 @@ export function useBoard(initialBoard?: Board | null) {
         ...col,
         jobApplications: [...col.jobApplications],
       }));
-
-      // Find and remove job from the old column
 
       let jobToMove: JobApplication | null = null;
       let oldColumnId: string | null = null;
@@ -73,18 +100,25 @@ export function useBoard(initialBoard?: Board | null) {
         }
       }
 
+      if (board?._id === "demo-board") {
+        const updatedBoard = { ...board, columns: newColumns };
+        saveGuestBoardToStorage(updatedBoard);
+      }
+
       return newColumns;
     });
 
-    try {
-      const result = await updateJobApplication(jobApplicationId, {
-        columnId: newColumnId,
-        order: newOrder,
-      });
-    } catch (err) {
-      console.error("Error", err);
+    if (board?._id !== "demo-board") {
+      try {
+        await updateJobApplication(jobApplicationId, {
+          columnId: newColumnId,
+          order: newOrder,
+        });
+      } catch (err) {
+        console.error("Error", err);
+      }
     }
   }
 
-  return { board, columns, error, moveJob };
+  return { board, columns, moveJob };
 }

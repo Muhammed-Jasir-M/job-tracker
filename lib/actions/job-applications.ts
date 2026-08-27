@@ -25,6 +25,7 @@ export async function createJobApplication(data: JobApplicationData) {
   if (!session?.user) {
     return { error: "Unauthorized" };
   }
+  const userId = session.user.id;
 
   await connectDB();
 
@@ -49,7 +50,7 @@ export async function createJobApplication(data: JobApplicationData) {
   // Verify board ownership
   const board = await Board.findOne({
     _id: boardId,
-    userId: session.user.id,
+    userId,
   });
 
   if (!board) {
@@ -82,7 +83,7 @@ export async function createJobApplication(data: JobApplicationData) {
     jobUrl,
     columnId,
     boardId,
-    userId: session.user.id,
+    userId,
     tags: tags || [],
     description,
     status: "applied",
@@ -119,6 +120,7 @@ export async function updateJobApplication(
   if (!session?.user) {
     return { error: "Unauthorized" };
   }
+  const userId = session.user.id;
 
   const jobApplication = await JobApplication.findById(id);
 
@@ -126,7 +128,7 @@ export async function updateJobApplication(
     return { error: "Job application not found" };
   }
 
-  if (jobApplication.userId !== session.user.id) {
+  if (jobApplication.userId !== userId) {
     return { error: "Unauthorized" };
   }
 
@@ -246,6 +248,7 @@ export async function deleteJobApplication(id: string) {
   if (!session?.user) {
     return { error: "Unauthorized" };
   }
+  const userId = session.user.id;
 
   const jobApplication = await JobApplication.findById(id);
 
@@ -253,7 +256,7 @@ export async function deleteJobApplication(id: string) {
     return { error: "Job application not found" };
   }
 
-  if (jobApplication.userId !== session.user.id) {
+  if (jobApplication.userId !== userId) {
     return { error: "Unauthorized" };
   }
 

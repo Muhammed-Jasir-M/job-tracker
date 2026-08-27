@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Board, Column, JobApplication } from "@/lib/models/models.types";
 import {
-  DollarSign,
   ExternalLink,
   Kanban,
   MapPin,
@@ -25,23 +24,16 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { deleteJobApplication, updateJobApplication } from "@/lib/actions/job-applications";
+import {
+  isGuestBoard,
+  getGuestBoardFromStorage,
+  deleteGuestJob,
+  moveGuestJob,
+  updateGuestJob,
+} from "@/lib/guest-storage";
 
 interface ApplicationsManagerProps {
   board: Board;
-}
-
-function getAvatarColor(name: string) {
-  const colors = [
-    "bg-violet-100 text-violet-700 border-violet-200",
-    "bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200",
-    "bg-sky-100 text-sky-700 border-sky-200",
-    "bg-emerald-100 text-emerald-700 border-emerald-200",
-    "bg-amber-100 text-amber-700 border-amber-200",
-    "bg-rose-100 text-rose-700 border-rose-200",
-  ];
-  let sum = 0;
-  for (let i = 0; i < name.length; i++) sum += name.charCodeAt(i);
-  return colors[sum % colors.length];
 }
 
 function getPriorityBadge(priority?: string) {
@@ -58,10 +50,12 @@ function getPriorityBadge(priority?: string) {
 }
 
 export default function ApplicationsManager({ board }: ApplicationsManagerProps) {
-  const columns = useMemo(
-    () => [...(board.columns || [])].sort((a, b) => a.order - b.order),
-    [board.columns]
-  );
+  const isGuest = isGuestBoard(board?._id);
+
+  const columns = useMemo(() => {
+    const source = isGuest ? getGuestBoardFromStorage() : board;
+    return [...(source.columns || [])].sort((a, b) => a.order - b.order);
+  }, [board, isGuest]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [columnFilter, setColumnFilter] = useState("all");
@@ -128,11 +122,21 @@ export default function ApplicationsManager({ board }: ApplicationsManagerProps)
   );
 
   async function handleStatusChange(id: string, columnId: string) {
+    if (isGuest) {
+      moveGuestJob(id, columnId, 999);
+      window.location.reload();
+      return;
+    }
     await updateJobApplication(id, { columnId });
   }
 
   async function handleDelete(id: string, company: string) {
     if (window.confirm(`Delete the application for ${company}?`)) {
+      if (isGuest) {
+        deleteGuestJob(id);
+        window.location.reload();
+        return;
+      }
       await deleteJobApplication(id);
     }
   }
@@ -417,7 +421,7 @@ export default function ApplicationsManager({ board }: ApplicationsManagerProps)
             </DialogDescription>
           </DialogHeader>
           {editingJob && (
-            <EditJobForm job={editingJob} columns={columns} onDone={() => setEditingJob(null)} />
+            <EditJobForm job={editingJob} columns={columns} isGuest={isGuest} onDone={() => setEditingJob(null)} />
           )}
         </DialogContent>
       </Dialog>
@@ -428,10 +432,12 @@ export default function ApplicationsManager({ board }: ApplicationsManagerProps)
 function EditJobForm({
   job,
   columns,
+  isGuest,
   onDone,
 }: {
   job: JobApplication;
   columns: Column[];
+  isGuest: boolean;
   onDone: () => void;
 }) {
   const [formData, setFormData] = useState({
@@ -449,6 +455,26 @@ function EditJobForm({
 
   async function handleUpdate(e: React.FormEvent) {
     e.preventDefault();
+    if (isGuest) {
+      updateGuestJob(job._id, {
+        company: formData.company,
+        position: formData.position,
+        location: formData.location,
+        priority: formData.priority,
+        notes: formData.notes,
+        salary: formData.salary,
+        jobUrl: formData.jobUrl,
+        columnId: formData.columnId,
+        tags: formData.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag.length > 0),
+        description: formData.description,
+      });
+      onDone();
+      window.location.reload();
+      return;
+    }
     const result = await updateJobApplication(job._id, {
       ...formData,
       tags: formData.tags

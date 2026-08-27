@@ -35,14 +35,14 @@ export default function Home() {
               </p>
 
               <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <Link href="/sign-up">
-                  <Button size="lg" className="h-13 px-8 text-base font-semibold bg-violet-600 hover:bg-violet-700 text-white shadow-glow-indigo rounded-xl transition-all duration-200 gap-2">
-                    Start for free <ArrowRight className="h-4 w-4" />
+                <Link href="/dashboard">
+                  <Button size="lg" className="h-13 px-8 text-base font-semibold bg-violet-600 hover:bg-violet-700 text-white shadow-glow-indigo rounded-xl gap-2 transition-all">
+                    Go to Dashboard <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
                 <Link href="/sign-in">
                   <Button variant="outline" size="lg" className="h-13 px-8 text-base font-semibold border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition-all">
-                    Sign in to your account
+                    Sign in
                   </Button>
                 </Link>
               </div>

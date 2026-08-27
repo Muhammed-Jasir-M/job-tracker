@@ -16,6 +16,7 @@ import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import React, { useState } from "react";
 import { createJobApplication } from "@/lib/actions/job-applications";
+import { getGuestBoardFromStorage, saveGuestBoardToStorage } from "@/lib/guest-storage";
 
 interface CreateJobApplicationDialogProps {
   columnId: string;
@@ -44,15 +45,54 @@ export default function CreateJobApplicationDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    const parsedTags = formData.tags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0);
+
+    if (boardId === "demo-board") {
+      const currentGuestBoard = getGuestBoardFromStorage();
+      const newJobId = `guest-job-${Date.now()}`;
+      const newJob = {
+        _id: newJobId,
+        company: formData.company,
+        position: formData.position,
+        location: formData.location,
+        priority: formData.priority,
+        notes: formData.notes,
+        salary: formData.salary,
+        jobUrl: formData.jobUrl,
+        columnId,
+        boardId,
+        tags: parsedTags,
+        description: formData.description,
+        status: "applied",
+        order: Date.now(),
+      };
+
+      const updatedColumns = (currentGuestBoard.columns || []).map((col) => {
+        if (col._id === columnId) {
+          return {
+            ...col,
+            jobApplications: [...(col.jobApplications || []), newJob],
+          };
+        }
+        return col;
+      });
+
+      saveGuestBoardToStorage({ ...currentGuestBoard, columns: updatedColumns });
+      setFormData(INITIAL_FORM_DATA);
+      setOpen(false);
+      window.location.reload();
+      return;
+    }
+
     try {
       const result = await createJobApplication({
         ...formData,
         columnId,
         boardId,
-        tags: formData.tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter((tag) => tag.length > 0),
+        tags: parsedTags,
       });
 
       if (!result.error) {

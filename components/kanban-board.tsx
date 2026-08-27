@@ -43,6 +43,13 @@ import JobApplicationCard from "./job-application-card";
 import { useBoard } from "@/lib/hooks/useBoards";
 import { createColumn, deleteColumn, renameColumn, updateColumnOrder } from "@/lib/actions/columns";
 import {
+  isGuestBoard,
+  addGuestColumn,
+  deleteGuestColumn,
+  renameGuestColumn,
+  reorderGuestColumns,
+} from "@/lib/guest-storage";
+import {
   closestCorners,
   DndContext,
   DragEndEvent,
@@ -63,7 +70,7 @@ import { useState, useMemo } from "react";
 
 interface KanbanBoardProps {
   board: Board;
-  userId: string;
+  userId?: string;
 }
 
 interface ColConfig {
@@ -113,6 +120,14 @@ function AddColumnDialog({ boardId }: { boardId: string }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
+
+    if (isGuestBoard(boardId)) {
+      addGuestColumn(name);
+      setOpen(false);
+      setName("");
+      window.location.reload();
+      return;
+    }
 
     const result = await createColumn({ boardId, name });
     if (!result.error) {
@@ -414,6 +429,7 @@ function DroppableColumn({
               key={key}
               job={{ ...job, columnId: job.columnId || column._id }}
               columns={sortedColumns}
+              boardId={boardId}
             />
           ))}
         </SortableContext>
@@ -441,9 +457,11 @@ function DroppableColumn({
 function SortableJobCard({
   job,
   columns,
+  boardId,
 }: {
   job: JobApplication;
   columns: Column[];
+  boardId?: string;
 }) {
   const {
     attributes,
@@ -470,6 +488,7 @@ function SortableJobCard({
       <JobApplicationCard
         job={job}
         columns={columns}
+        boardId={boardId}
         dragHandleProps={{ ...attributes, ...listeners }}
       />
     </div>
@@ -487,6 +506,7 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
     name: string;
   } | null>(null);
   const { columns, moveJob } = useBoard(board);
+  const isGuest = isGuestBoard(board?._id);
 
   const sortedColumns = useMemo(() => {
     if (!columns) return [];
@@ -531,6 +551,11 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
   );
 
   function handleRenameColumn(columnId: string, name: string) {
+    if (isGuest) {
+      renameGuestColumn(columnId, name);
+      window.location.reload();
+      return;
+    }
     renameColumn(columnId, name).then((result) => {
       if (result.error) {
         console.error("Failed to rename column:", result.error);
@@ -547,6 +572,11 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
         `Delete "${column.name}" and all ${column.jobApplications?.length || 0} application(s) inside it?`
       )
     ) {
+      if (isGuest) {
+        deleteGuestColumn(columnId);
+        window.location.reload();
+        return;
+      }
       deleteColumn(columnId).then((result) => {
         if (result.error) {
           console.error("Failed to delete column:", result.error);
@@ -561,6 +591,12 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
 
     const currentCol = sortedColumns[columnIndex];
     const targetCol = sortedColumns[targetIndex];
+
+    if (isGuest) {
+      reorderGuestColumns(currentCol._id, targetCol._id);
+      window.location.reload();
+      return;
+    }
 
     const currentOrder = currentCol.order;
     const targetOrder = targetCol.order;
@@ -908,7 +944,11 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
         <DragOverlay>
           {activeJob ? (
             <div className="opacity-90 scale-105 shadow-2xl">
-              <JobApplicationCard job={activeJob} columns={sortedColumns} />
+              <JobApplicationCard
+                job={activeJob}
+                columns={sortedColumns}
+                boardId={board._id}
+              />
             </div>
           ) : null}
         </DragOverlay>
