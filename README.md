@@ -16,6 +16,21 @@ A modern, lightweight application tracker built with **Next.js 16 (App Router)**
 
 ---
 
+## 📁 Project Structure
+
+```text
+Job-Tracker/
+├── app/          # App Router pages & API routes (Landing, Dashboard, Auth)
+├── components/   # Reusable UI & Kanban components (Board, Cards, Dialogs, Navbar)
+├── lib/          # Core application logic
+│   ├── actions/  # Server Actions (Jobs, Columns, Migration)
+│   ├── auth/     # Better Auth configuration & client
+│   └── models/   # Mongoose database models & TypeScript interfaces
+└── proxy.ts      # Route middleware for protection & redirects
+```
+
+---
+
 ## 🧰 Tech Stack
 
 | Layer | Tech |

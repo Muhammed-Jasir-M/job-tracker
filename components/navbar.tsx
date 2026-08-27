@@ -96,18 +96,20 @@ export default function Navbar() {
                   variant="ghost"
                   size="sm"
                   className="font-semibold text-xs sm:text-sm text-slate-700 hover:bg-violet-50 hover:text-violet-700 rounded-xl gap-1.5 h-9 px-2.5 sm:px-3"
+                  title="Dashboard"
                 >
                   <LayoutDashboard className="h-4 w-4 text-violet-600 shrink-0" />
-                  <span>Dashboard</span>
+                  <span className="hidden sm:inline">Dashboard</span>
                 </Button>
               </Link>
               <Link href="/sign-in">
                 <Button
                   size="sm"
-                  className="bg-violet-600 hover:bg-violet-700 text-white font-semibold shadow-glow-indigo rounded-xl text-xs sm:text-sm h-9 px-3.5 transition-all gap-1.5"
+                  className="bg-violet-600 hover:bg-violet-700 text-white font-semibold shadow-glow-indigo rounded-xl text-xs sm:text-sm h-9 px-2.5 sm:px-3.5 transition-all gap-1.5"
+                  title="Sign In"
                 >
                   <LogIn className="h-4 w-4 shrink-0" />
-                  <span>Sign in</span>
+                  <span className="hidden sm:inline">Sign in</span>
                 </Button>
               </Link>
             </>
