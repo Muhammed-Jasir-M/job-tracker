@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Award,
+  Bookmark,
   Briefcase,
   Calendar,
   CheckCircle2,
@@ -14,6 +15,7 @@ import {
   Pencil,
   Plus,
   Search,
+  Send,
   Trash2,
   XCircle,
 } from "lucide-react";
@@ -496,6 +498,7 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
     const allJobs = sortedColumns.flatMap((col) => col.jobApplications || []);
     const total = allJobs.length;
 
+    let wishlist = 0;
     let applied = 0;
     let interviewing = 0;
     let offers = 0;
@@ -504,7 +507,9 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
     sortedColumns.forEach((col) => {
       const colName = col.name.toLowerCase();
       const count = col.jobApplications?.length || 0;
-      if (colName.includes("applied") || colName.includes("wish")) {
+      if (colName.includes("wish")) {
+        wishlist += count;
+      } else if (colName.includes("applied")) {
         applied += count;
       } else if (colName.includes("interview")) {
         interviewing += count;
@@ -515,7 +520,7 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
       }
     });
 
-    return { total, applied, interviewing, offers, rejected };
+    return { total, wishlist, applied, interviewing, offers, rejected };
   }, [sortedColumns]);
 
   const hasActiveFilters = Boolean(
@@ -678,7 +683,7 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
   return (
     <div className="space-y-6">
       {/* Overview Stat Badges */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <div className="relative flex flex-col rounded-2xl border border-slate-200/80 bg-white p-4 shadow-card overflow-hidden">
           <div className="absolute -top-8 -right-8 h-20 w-20 rounded-full bg-violet-100/60 blur-2xl" />
           <div className="flex items-center justify-between gap-2">
@@ -700,10 +705,27 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
           <div className="absolute -top-8 -right-8 h-20 w-20 rounded-full bg-sky-100/60 blur-2xl" />
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Applied / Wishlist
+              Wishlist
             </span>
             <div className="rounded-lg bg-sky-50 p-2 text-sky-600 shadow-sm">
-              <Calendar className="h-4 w-4" />
+              <Bookmark className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-2xl font-extrabold text-slate-900">
+              {stats.wishlist}
+            </span>
+          </div>
+        </div>
+
+        <div className="relative flex flex-col rounded-2xl border border-slate-200/80 bg-white p-4 shadow-card overflow-hidden">
+          <div className="absolute -top-8 -right-8 h-20 w-20 rounded-full bg-blue-100/60 blur-2xl" />
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Applied
+            </span>
+            <div className="rounded-lg bg-blue-50 p-2 text-blue-600 shadow-sm">
+              <Send className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline justify-between">
@@ -747,7 +769,7 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
           </div>
         </div>
 
-        <div className="relative col-span-2 sm:col-span-1 flex flex-col rounded-2xl border border-slate-200/80 bg-white p-4 shadow-card overflow-hidden">
+        <div className="relative flex flex-col rounded-2xl border border-slate-200/80 bg-white p-4 shadow-card overflow-hidden">
           <div className="absolute -top-8 -right-8 h-20 w-20 rounded-full bg-rose-100/60 blur-2xl" />
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
