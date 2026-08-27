@@ -10,22 +10,35 @@ import {
   Inbox,
   Mic,
   MoreVertical,
+  Pencil,
+  Plus,
   Search,
   Trash2,
   XCircle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import { Label } from "./ui/label";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import CreateJobApplicationDialog from "./create-job-dialog";
 import JobApplicationCard from "./job-application-card";
 import { useBoard } from "@/lib/hooks/useBoards";
+import { createColumn, deleteColumn, renameColumn } from "@/lib/actions/columns";
 import {
   closestCorners,
   DndContext,
@@ -90,6 +103,151 @@ const COLUMN_CONFIG: Array<ColConfig> = [
   },
 ];
 
+function AddColumnDialog({ boardId }: { boardId: string }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) return;
+
+    const result = await createColumn({ boardId, name });
+    if (!result.error) {
+      setOpen(false);
+      setName("");
+    } else {
+      console.error("Failed to create column:", result.error);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="outline"
+          className="h-12 w-[320px] shrink-0 justify-center text-sm font-semibold text-slate-500 hover:text-violet-700 border-dashed border-2 border-slate-200 hover:border-violet-300 hover:bg-violet-50/50 rounded-2xl shadow-none gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Add Column
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md rounded-2xl p-6">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-bold text-slate-900">
+            Add New Column
+          </DialogTitle>
+          <DialogDescription className="text-sm text-slate-500">
+            Create a new stage in your application pipeline.
+          </DialogDescription>
+        </DialogHeader>
+        <form className="space-y-4 pt-2" onSubmit={handleSubmit}>
+          <div className="space-y-1.5">
+            <Label htmlFor="column-name" className="text-xs font-semibold text-slate-700">
+              Column Name
+            </Label>
+            <Input
+              id="column-name"
+              required
+              autoFocus
+              placeholder="e.g. Phone Screen"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="border-slate-200 rounded-xl"
+            />
+          </div>
+          <DialogFooter className="gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              className="rounded-xl border-slate-200"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="bg-violet-600 hover:bg-violet-700 text-white shadow-glow-indigo rounded-xl"
+            >
+              Add Column
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function RenameColumnDialog({
+  columnId,
+  initialName,
+  open,
+  onOpenChange,
+  onRename,
+}: {
+  columnId: string;
+  initialName: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onRename: (columnId: string, name: string) => void;
+}) {
+  const [name, setName] = useState(initialName);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md rounded-2xl p-6">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-bold text-slate-900">
+            Rename Column
+          </DialogTitle>
+          <DialogDescription className="text-sm text-slate-500">
+            Update the name of this pipeline stage.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          className="space-y-4 pt-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!name.trim()) return;
+            onRename(columnId, name.trim());
+            onOpenChange(false);
+          }}
+        >
+          <div className="space-y-1.5">
+            <Label htmlFor="rename-column" className="text-xs font-semibold text-slate-700">
+              Column Name
+            </Label>
+            <Input
+              id="rename-column"
+              required
+              autoFocus
+              placeholder="e.g. Phone Screen"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="border-slate-200 rounded-xl"
+            />
+          </div>
+          <DialogFooter className="gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="rounded-xl border-slate-200"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="bg-violet-600 hover:bg-violet-700 text-white shadow-glow-indigo rounded-xl"
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function DroppableColumn({
   column,
   config,
@@ -98,6 +256,8 @@ function DroppableColumn({
   searchQuery,
   priorityFilter,
   sortBy,
+  onRename,
+  onDelete,
 }: {
   column: Column;
   config: ColConfig;
@@ -106,6 +266,8 @@ function DroppableColumn({
   searchQuery: string;
   priorityFilter: string;
   sortBy: string;
+  onRename: (columnId: string, name: string) => void;
+  onDelete: (columnId: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: column._id,
@@ -184,8 +346,18 @@ function DroppableColumn({
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40 rounded-xl">
-            <DropdownMenuItem className="text-rose-600 focus:text-rose-600 focus:bg-rose-50 cursor-pointer">
+          <DropdownMenuContent align="end" className="w-44 rounded-xl">
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => onRename(column._id, column.name)}
+            >
+              <Pencil className="mr-2 h-4 w-4 text-slate-500" />
+              Rename Column
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-rose-600 focus:text-rose-600 focus:bg-rose-50 cursor-pointer"
+              onClick={() => onDelete(column._id)}
+            >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete Column
             </DropdownMenuItem>
@@ -274,7 +446,12 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("all");
+  const [columnFilter, setColumnFilter] = useState("all");
   const [sortBy, setSortBy] = useState("default");
+  const [renameTarget, setRenameTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const { columns, moveJob } = useBoard(board);
 
   const sortedColumns = useMemo(() => {
@@ -310,8 +487,36 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
   }, [sortedColumns]);
 
   const hasActiveFilters = Boolean(
-    searchQuery.trim() || priorityFilter !== "all" || sortBy !== "default"
+    searchQuery.trim() ||
+      priorityFilter !== "all" ||
+      columnFilter !== "all" ||
+      sortBy !== "default"
   );
+
+  function handleRenameColumn(columnId: string, name: string) {
+    renameColumn(columnId, name).then((result) => {
+      if (result.error) {
+        console.error("Failed to rename column:", result.error);
+      }
+    });
+  }
+
+  function handleDeleteColumn(columnId: string) {
+    const column = sortedColumns.find((c) => c._id === columnId);
+    if (!column) return;
+
+    if (
+      window.confirm(
+        `Delete "${column.name}" and all ${column.jobApplications?.length || 0} application(s) inside it?`
+      )
+    ) {
+      deleteColumn(columnId).then((result) => {
+        if (result.error) {
+          console.error("Failed to delete column:", result.error);
+        }
+      });
+    }
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -530,6 +735,20 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
 
         {/* Filter Controls Row */}
         <div className="flex flex-wrap items-center gap-2.5">
+          {/* Column / Stage Filter */}
+          <select
+            value={columnFilter}
+            onChange={(e) => setColumnFilter(e.target.value)}
+            className="h-10 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500/20 cursor-pointer transition-colors"
+          >
+            <option value="all">All Stages</option>
+            {sortedColumns.map((col) => (
+              <option key={col._id} value={col._id}>
+                {col.name}
+              </option>
+            ))}
+          </select>
+
           {/* Priority Filter */}
           <div className="flex items-center gap-1.5">
             <Filter className="h-3.5 w-3.5 text-slate-400 hidden sm:block" />
@@ -565,6 +784,7 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
               onClick={() => {
                 setSearchQuery("");
                 setPriorityFilter("all");
+                setColumnFilter("all");
                 setSortBy("default");
               }}
               className="h-10 px-3 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200/80 rounded-xl"
@@ -583,26 +803,36 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
         onDragEnd={handleDragEnd}
       >
         <div className="flex gap-5 overflow-x-auto pb-6 pt-1 items-start min-h-[550px]">
-          {sortedColumns.map((col, key) => {
-            const config = COLUMN_CONFIG[key] || {
-              accentColor: "bg-slate-400",
-              badgeStyle: "bg-slate-100 text-slate-700 border-slate-200",
-              icon: <Calendar className="h-4 w-4 text-slate-600" />,
-              dot: "bg-slate-400",
-            };
-            return (
-              <DroppableColumn
-                key={key}
-                column={col}
-                config={config}
-                boardId={board._id}
-                sortedColumns={sortedColumns}
-                searchQuery={searchQuery}
-                priorityFilter={priorityFilter}
-                sortBy={sortBy}
-              />
-            );
-          })}
+          {sortedColumns
+            .filter(
+              (col) => columnFilter === "all" || col._id === columnFilter
+            )
+            .map((col, key) => {
+              const config = COLUMN_CONFIG[key] || {
+                accentColor: "bg-slate-400",
+                badgeStyle: "bg-slate-100 text-slate-700 border-slate-200",
+                icon: <Calendar className="h-4 w-4 text-slate-600" />,
+                dot: "bg-slate-400",
+              };
+              return (
+                <DroppableColumn
+                  key={col._id}
+                  column={col}
+                  config={config}
+                  boardId={board._id}
+                  sortedColumns={sortedColumns}
+                  searchQuery={searchQuery}
+                  priorityFilter={priorityFilter}
+                  sortBy={sortBy}
+                  onRename={(columnId, name) => {
+                    setRenameTarget({ id: columnId, name });
+                  }}
+                  onDelete={handleDeleteColumn}
+                />
+              );
+            })}
+
+          {columnFilter === "all" && <AddColumnDialog boardId={board._id} />}
         </div>
 
         <DragOverlay>
@@ -613,6 +843,16 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      <RenameColumnDialog
+        columnId={renameTarget?.id || ""}
+        initialName={renameTarget?.name || ""}
+        open={Boolean(renameTarget)}
+        onOpenChange={(open) => {
+          if (!open) setRenameTarget(null);
+        }}
+        onRename={handleRenameColumn}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Briefcase, LayoutDashboard, LogIn } from "lucide-react";
+import { Briefcase, LayoutDashboard, ListChecks, LogIn } from "lucide-react";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import {
@@ -42,6 +42,16 @@ export default function Navbar() {
                 >
                   <LayoutDashboard className="h-4 w-4 text-violet-600" />
                   Dashboard
+                </Button>
+              </Link>
+              <Link href="/dashboard/applications">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="font-medium text-slate-600 hover:bg-violet-50 hover:text-violet-700 rounded-lg gap-2"
+                >
+                  <ListChecks className="h-4 w-4 text-violet-600" />
+                  Manage
                 </Button>
               </Link>
 
