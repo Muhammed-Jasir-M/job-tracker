@@ -125,3 +125,30 @@ export async function deleteColumn(id: string) {
 
   return { success: true };
 }
+
+export async function updateColumnOrder(columnId: string, newOrder: number) {
+  const session = await getSession();
+
+  if (!session?.user) {
+    return { error: "Unauthorized" };
+  }
+
+  await connectDB();
+
+  const column = await Column.findById(columnId);
+  if (!column) return { error: "Column not found" };
+
+  const board = await Board.findOne({
+    _id: column.boardId,
+    userId: session.user.id,
+  });
+
+  if (!board) return { error: "Unauthorized" };
+
+  column.order = newOrder;
+  await column.save();
+
+  revalidatePath("/dashboard");
+
+  return { success: true };
+}

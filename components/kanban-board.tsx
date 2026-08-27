@@ -2,11 +2,12 @@
 
 import { Board, Column, JobApplication } from "@/lib/models/models.types";
 import {
+  ArrowLeft,
+  ArrowRight,
   Award,
   Briefcase,
   Calendar,
   CheckCircle2,
-  Filter,
   Inbox,
   Mic,
   MoreVertical,
@@ -38,7 +39,7 @@ import { Input } from "./ui/input";
 import CreateJobApplicationDialog from "./create-job-dialog";
 import JobApplicationCard from "./job-application-card";
 import { useBoard } from "@/lib/hooks/useBoards";
-import { createColumn, deleteColumn, renameColumn } from "@/lib/actions/columns";
+import { createColumn, deleteColumn, renameColumn, updateColumnOrder } from "@/lib/actions/columns";
 import {
   closestCorners,
   DndContext,
@@ -258,6 +259,10 @@ function DroppableColumn({
   sortBy,
   onRename,
   onDelete,
+  onMoveLeft,
+  onMoveRight,
+  canMoveLeft,
+  canMoveRight,
 }: {
   column: Column;
   config: ColConfig;
@@ -268,6 +273,10 @@ function DroppableColumn({
   sortBy: string;
   onRename: (columnId: string, name: string) => void;
   onDelete: (columnId: string) => void;
+  onMoveLeft?: () => void;
+  onMoveRight?: () => void;
+  canMoveLeft?: boolean;
+  canMoveRight?: boolean;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: column._id,
@@ -348,14 +357,37 @@ function DroppableColumn({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44 rounded-xl">
             <DropdownMenuItem
-              className="cursor-pointer"
+              className="cursor-pointer text-xs font-medium text-slate-700"
               onClick={() => onRename(column._id, column.name)}
             >
               <Pencil className="mr-2 h-4 w-4 text-slate-500" />
               Rename Column
             </DropdownMenuItem>
+
+            {canMoveLeft && (
+              <DropdownMenuItem
+                className="cursor-pointer text-xs font-medium text-slate-700"
+                onClick={onMoveLeft}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4 text-slate-500" />
+                Move Left
+              </DropdownMenuItem>
+            )}
+
+            {canMoveRight && (
+              <DropdownMenuItem
+                className="cursor-pointer text-xs font-medium text-slate-700"
+                onClick={onMoveRight}
+              >
+                <ArrowRight className="mr-2 h-4 w-4 text-slate-500" />
+                Move Right
+              </DropdownMenuItem>
+            )}
+
+            <div className="my-1 border-t border-slate-100" />
+
             <DropdownMenuItem
-              className="text-rose-600 focus:text-rose-600 focus:bg-rose-50 cursor-pointer"
+              className="text-rose-600 focus:text-rose-600 focus:bg-rose-50 cursor-pointer text-xs font-medium"
               onClick={() => onDelete(column._id)}
             >
               <Trash2 className="mr-2 h-4 w-4" />
@@ -516,6 +548,20 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
         }
       });
     }
+  }
+
+  async function handleMoveColumn(columnIndex: number, direction: "left" | "right") {
+    const targetIndex = direction === "left" ? columnIndex - 1 : columnIndex + 1;
+    if (targetIndex < 0 || targetIndex >= sortedColumns.length) return;
+
+    const currentCol = sortedColumns[columnIndex];
+    const targetCol = sortedColumns[targetIndex];
+
+    const currentOrder = currentCol.order;
+    const targetOrder = targetCol.order;
+
+    await updateColumnOrder(currentCol._id, targetOrder);
+    await updateColumnOrder(targetCol._id, currentOrder);
   }
 
   const sensors = useSensors(
@@ -720,7 +766,7 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
       </div>
 
       {/* Board Controls Bar: Search, Priority Filter & Sort Options (Task Manager style) */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-card">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-card">
         {/* Search Input */}
         <div className="relative flex-1 min-w-60">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -750,19 +796,16 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
           </select>
 
           {/* Priority Filter */}
-          <div className="flex items-center gap-1.5">
-            <Filter className="h-3.5 w-3.5 text-slate-400 hidden sm:block" />
-            <select
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-              className="h-10 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500/20 cursor-pointer transition-colors"
-            >
-              <option value="all">All Priorities</option>
-              <option value="High">High Priority</option>
-              <option value="Medium">Medium Priority</option>
-              <option value="Low">Low Priority</option>
-            </select>
-          </div>
+          <select
+            value={priorityFilter}
+            onChange={(e) => setPriorityFilter(e.target.value)}
+            className="h-10 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500/20 cursor-pointer transition-colors"
+          >
+            <option value="all">All Priorities</option>
+            <option value="High">High Priority</option>
+            <option value="Medium">Medium Priority</option>
+            <option value="Low">Low Priority</option>
+          </select>
 
           {/* Sort By Select */}
           <select
@@ -770,7 +813,7 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
             onChange={(e) => setSortBy(e.target.value)}
             className="h-10 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500/20 cursor-pointer transition-colors"
           >
-            <option value="default">Sort: Column Order</option>
+            <option value="default">Sort: Default Order</option>
             <option value="company_asc">Company (A - Z)</option>
             <option value="company_desc">Company (Z - A)</option>
             <option value="priority_desc">Priority (High to Low)</option>
@@ -807,13 +850,14 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
             .filter(
               (col) => columnFilter === "all" || col._id === columnFilter
             )
-            .map((col, key) => {
-              const config = COLUMN_CONFIG[key] || {
+            .map((col, index) => {
+              const config = COLUMN_CONFIG[index] || {
                 accentColor: "bg-slate-400",
                 badgeStyle: "bg-slate-100 text-slate-700 border-slate-200",
                 icon: <Calendar className="h-4 w-4 text-slate-600" />,
                 dot: "bg-slate-400",
               };
+              const colIndexInSorted = sortedColumns.findIndex((c) => c._id === col._id);
               return (
                 <DroppableColumn
                   key={col._id}
@@ -828,6 +872,10 @@ export default function KanbanBoard({ board }: KanbanBoardProps) {
                     setRenameTarget({ id: columnId, name });
                   }}
                   onDelete={handleDeleteColumn}
+                  canMoveLeft={colIndexInSorted > 0}
+                  canMoveRight={colIndexInSorted < sortedColumns.length - 1}
+                  onMoveLeft={() => handleMoveColumn(colIndexInSorted, "left")}
+                  onMoveRight={() => handleMoveColumn(colIndexInSorted, "right")}
                 />
               );
             })}

@@ -167,7 +167,7 @@ export default function ApplicationsManager({ board }: ApplicationsManagerProps)
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-col gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-card">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-card">
         <div className="relative flex-1 min-w-60">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
@@ -209,7 +209,7 @@ export default function ApplicationsManager({ board }: ApplicationsManagerProps)
             onChange={(e) => setSortBy(e.target.value)}
             className="h-10 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500/20 cursor-pointer transition-colors"
           >
-            <option value="default">Sort: Funnel Order</option>
+            <option value="default">Sort: Default Order</option>
             <option value="company_asc">Company (A - Z)</option>
             <option value="company_desc">Company (Z - A)</option>
             <option value="position_asc">Position (A - Z)</option>

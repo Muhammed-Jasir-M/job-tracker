@@ -170,65 +170,7 @@ export default function JobApplicationCard({
               </div>
             </div>
 
-            {/* Actions Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-opacity"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 rounded-xl">
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsEditing(true);
-                  }}
-                  className="cursor-pointer"
-                >
-                  <Edit2 className="mr-2 h-4 w-4 text-slate-500" />
-                  Edit Details
-                </DropdownMenuItem>
-
-                {columns.length > 1 && (
-                  <>
-                    <div className="my-1 border-t border-slate-100" />
-                    {columns
-                      .filter((c) => c._id !== job.columnId)
-                      .map((column, key) => (
-                        <DropdownMenuItem
-                          key={key}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleMove(column._id);
-                          }}
-                          className="cursor-pointer text-xs"
-                        >
-                          <MoveRight className="mr-2 h-3.5 w-3.5 text-slate-400" />
-                          Move to {column.name}
-                        </DropdownMenuItem>
-                      ))}
-                  </>
-                )}
-
-                <div className="my-1 border-t border-slate-100" />
-                <DropdownMenuItem
-                  className="text-rose-600 focus:text-rose-600 focus:bg-rose-50 cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete();
-                  }}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+            </div>
 
           {/* Description snippet if available */}
           {job.description && (
